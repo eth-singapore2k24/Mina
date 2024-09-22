@@ -1,143 +1,118 @@
-# Protokit starter-kit
+# Project Name: AEGIS
 
-This repository is a monorepo aimed at kickstarting application chain development using the Protokit framework.
+## Overview
 
-## Quick start
+Our project revolutionizes advertising technology by prioritizing user privacy while delivering personalized ads. We offer two dashboards: one for advertisers and one for publishers. Advertisers submit their ads as proposals to a DAO, where members vote based on their governance token stakes. The outcome determines ad display and influences the advertiser's reputation and reach.
 
-The monorepo contains 1 package and 1 app:
+Publishers register their websites on our platform, which scrapes content to the backend. An LLM assigns relevant tags to site sections, and an SDK wraps the website's divs to track user behavior, emitting events with generic and personal tags. Personal tags remain client-side for privacy, while encrypted generic tags are stored on IPFS.
 
-- `packages/chain` contains everything related to your app-chain
-- `apps/web` contains a demo UI that connects to your locally hosted app-chain sequencer
+We use The Graph to index IPFS for efficient token retrieval mapped to users. User anonymity is preserved with World-ID, masking real identities from on-chain identities. When users visit websites, tag matching triggers personalized ads on the client side.
 
-**Prerequisites:**
+Our system ensures full transparency by conducting all transactions on-chain and off-chain on a zk-side app chain, providing zk proofs and proof of ad display to advertisers. This approach guarantees privacy, transparency, and effective ad targeting.
 
-- Node.js `v18` (we recommend using NVM)
-- pnpm `v9.8`
-- nvm
+## System Architecture
+![diagram-export-22-09-2024-05_22_17](https://github.com/user-attachments/assets/81f7fa24-fea8-4f89-8f95-595b431a80b8)
 
-For running with persistance / deploying on a server
-- docker `>= 24.0`
-- docker-compose `>= 2.22.0`
 
-## Setup
+### I. User Experience (dApp Layer)
 
-```zsh
-git clone https://github.com/proto-kit/starter-kit my-chain
-cd my-chain
+#### dApp Integration
+- **Description:** Web3 dApps integrate your platform's lightweight SDK or library.
+- **Functionality:**
+  - Handles ad requests based on user context (e.g., browsing history within the dApp).
+  - Displays ads to users in a non-intrusive way.
+  - Provides an interface for optional user engagement (clicks, interactions).
+  - Facilitates communication with your platform's backend services.
 
-# ensures you have the right node.js version
-nvm use
-pnpm install
-```
+#### Client-Side Interest Group Classification and Preference Management (Mina Protocol)
+- **Description:** Runs on the user's device (browser or dApp environment).
+- **Functionality:**
+  - **Interest Group Classification:**
+    - Analyzes user activity within the dApp (with their consent).
+    - Classifies users into broad interest groups based on predefined rules.
+  - **On-Chain Preference Management:**
+    - Allows users to connect their wallets (using pseudonyms) to manage ad preferences on the Mina blockchain.
+    - Uses zk-SNARKs to let users opt-out of specific ad categories or set frequency caps without revealing their actual preferences.
+- **Mina Technologies:**
+  - zk-SNARKs (for private preference signaling).
+  - SnarkyJS (for writing the zk-SNARK circuits).
 
-## Running
+#### zk-SNARK-Based Ad Viewability Verification (Mina Protocol)
+- **Description:** Runs on the user's device in conjunction with ad display.
+- **Functionality:**
+  - Generates a zk-SNARK proof when an ad is displayed, proving:
+    - The ad was visible within the viewport.
+    - The ad was displayed for a minimum duration.
+  - Submits this proof to the Mina blockchain, linked to the user's pseudonym.
+- **Mina Technologies:**
+  - zk-SNARKs.
+  - SnarkyJS.
 
-### Environments
+#### Privacy-Preserving Engagement Tracking and Reward Management (Mina Protocol)
+- **Description:** Handles user engagement tracking and optional reward distribution.
+- **Functionality:**
+  - **Engagement Tracking:**
+    - Records user clicks or interactions with ads using zk-SNARKs to preserve privacy.
+    - Optionally captures more granular engagement metrics (time spent viewing, interactions) if it aligns with your privacy policy.
+  - **Private Reward Distribution:**
+    - Uses zk-SNARKs to enable confidential transactions, hiding reward amounts from public view.
+    - Allows for private, off-chain reward accumulation, with users generating zk-SNARK proofs of their total balance for withdrawals.
+- **Mina Technologies:**
+  - zk-SNARKs.
+  - SnarkyJS.
 
-The starter-kit offers different environments to run you appchain.
-You can use those environments to configure the mode of operation for your appchain depending on which stage of development you are in.
+### II. Platform Backend and Infrastructure
 
-The starter kit comes with a set of pre-configured environments:
-- `inmemory`: Runs everything in-memory without persisting the data. Useful for early stages of runtime development.
-- `development`: Runs the sequencer locally and persists all state in databases running in docker. 
-- `sovereign`: Runs your appchain fully in docker (except the UI) for testnet deployments without settlement.
+#### Decentralized Ad Network (AirDAO)
+- **Description:** Manages ad inventory, campaign parameters, and reward mechanisms.
+- **Functionality:**
+  - **Campaign Management:**
+    - Advertisers submit campaign proposals through the AirDAO.
+    - The DAO votes on proposals based on predefined criteria (ad quality, targeting, budget).
+  - **Ad Serving:**
+    - Receives ad requests from dApps, considering user interest groups, campaign parameters, and available inventory.
+    - Selects and serves relevant ads to users.
+  - **Reward Distribution:**
+    - Distributes token rewards to users based on their verified engagement and the parameters set by advertisers.
+- **AirDAO Technologies:**
+  - DAO governance mechanisms (voting, tokenomics).
+  - Smart contracts for campaign management and reward distribution.
 
-Every command you execute should follow this pattern:
+#### Decentralized Reputation System (Mina Protocol)
+- **Description:** Tracks advertiser reputation on-chain.
+- **Functionality:**
+  - Assigns reputation scores to advertisers based on ad quality, campaign performance, and community feedback.
+  - Uses zk-SNARKs to prevent score manipulation and protect the privacy of feedback providers.
+- **Mina Technologies:**
+  - SnarkyJS.
+  - zk-SNARKs.
 
-`pnpm env:<environment> <command>`
+#### Off-Chain Analytics and Reporting (Potentially Ethereum Foundation, Filecoin/IPFS/Arweave)
+- **Description:** Provides advertisers with detailed campaign performance data.
+- **Functionality:**
+  - Collects and aggregates on-chain data (ad views, clicks, reward distributions).
+  - Generates reports and visualizations to help advertisers understand campaign effectiveness.
+- **Potential Technologies:**
+  - Ethereum smart contracts (for data aggregation and reporting).
+  - Filecoin/IPFS/Arweave (for decentralized storage of large datasets).
 
-This makes sure that everything is set correctly and our tooling knows which environment you want to use.
+### III. Additional Considerations
 
-### Running in-memory
+- **Pseudonym Management:** Implement a secure and privacy-preserving way to generate, store, and manage user pseudonyms. This could involve techniques like:
+  - Local pseudonym generation on the user's device.
+  - Decentralized storage using IPFS or similar technologies.
+- **Security:** Prioritize security at all levels of the architecture, including:
+  - Secure key management for encryption and zk-SNARK proofs.
+  - Smart contract audits to prevent vulnerabilities.
+  - Protection against Sybil attacks and other forms of fraud.
+- **Scalability:** Design the system to handle a growing number of users, advertisers, and ad campaigns. Consider using layer-2 scaling solutions or other optimization techniques.
 
-```zsh
-# starts both UI and sequencer locally
-pnpm env:inmemory dev
+## The Graph Integration
 
-# starts UI only
-pnpm env:inmemory dev --filter web
-# starts sequencer only
-pnpm env:inmemory dev --filter chain
-```
+The Graph plays a crucial role in our technology stack by enabling efficient data fetching from both on-chain and off-chain storage. It indexes IPFS files using CIDs, allowing seamless access to decentralized data. By emitting events from the client-side, we store user preferences and behavior-based data on IPFS, while simultaneously indexing The Graph to bring off-chain data on-chain for optimal retrieval. This sophisticated data management strategy provides sponsors with unparalleled insights and precision in targeting.
 
-> Be aware, the dev command will automatically restart your application when your sources change. 
-> If you don't want that, you can alternatively use `pnpm run build` and `pnpm run start`
+## AirDAO Governance
 
-Navigate to `localhost:3000` to see the example UI, or to `localhost:8080/graphql` to see the GQL interface of the locally running sequencer.
+AirDAO empowers users to govern the advertising ecosystem through on-chain governance and Soulbound Tokens (SBTs), fostering a community-driven approach. Advertisers submit ads as DAO proposals, with voting outcomes determining ad display and influencing reputation. Publishers register websites, which are scraped to assign relevant tags using LLMs, and an SDK tracks user behavior. This comprehensive integration of technologies ensures a secure, transparent, and privacy-focused advertising platform, making it highly attractive to sponsors.
 
-### Running tests
-```zsh
-# run and watch tests for the `chain` package
-pnpm run test --filter=chain -- --watchAll
-```
-
-### Running with persistence
-
-```zsh
-# start databases
-pnpm env:development docker:up -d
-# generate prisma client
-pnpm env:development prisma:generate
-# migrate database schema
-pnpm env:development prisma:migrate
-
-# build & start sequencer, make sure to prisma:generate & migrate before
-pnpm build --filter=chain
-pnpm env:development start --filter=chain
-
-# Watch sequencer for local filesystem changes
-# Be aware: Flags like --prune won't work with 'dev'
-pnpm env:development dev --filter=chain
-
-# Start the UI
-pnpm env:development dev --filter web
-```
-
-### Deploying to a server
-
-When deploying to a server, you should push your code along with your forked starter-kit to some repository, 
-then clone it on your remote server and execute it.
-
-```zsh
-# start every component with docker
-pnpm env:sovereign docker:up -d
-```
-
-UI will be accessible at `https://localhost` and GQL inspector will be available at `https://localhost/graphql`
-
-#### Configuration
-
-Go to `docker/proxy/Caddyfile` and replace the `*` matcher with your domain.
-```
-yourdomain.com {
-    ...
-}
-```
-
-> HTTPS is handled automatically by Caddy, you can (learn more about automatic https here.)[https://caddyserver.com/docs/automatic-https]
-
-In most cases, you will need to change the `NEXT_PUBLIC_PROTOKIT_GRAPHQL_URL` property in the `.env` file to the domain your graphql endpoint is running in.
-By default, the graphql endpoint is running on the same domain as your UI with the `/graphql` suffix.
-
-#### Running sovereign chain locally
-
-The caddy reverse-proxy automatically uses https for all connections, use this guide to remove certificate errors when accessing localhost sites
-
-<https://caddyserver.com/docs/running#local-https-with-docker>
-
-## CLI Options
-
-- `logLevel`: Overrides the loglevel used. Also configurable via the `PROTOKIT_LOG_LEVEL` environment variable.
-- `pruneOnStartup`: If set, prunes the database before startup, so that your chain is starting from a clean, genesis state. Alias for environment variable `PROTOKIT_PRUNE_ON_STARTUP`
-
-In order to pass in those CLI option, add it at the end of your command like this
-
-`pnpm env:inmemory dev --filter chain -- --logLevel DEBUG --pruneOnStartup`
-
-### Building the framework from source
-
-1. Make sure the framework is located under ../framework from the starter-kit's location
-2. Adapt your starter-kit's package.json to use the file:// references to framework
-3. Go into the framework folder, and build a docker image containing the sources with `docker build -f ./packages/deployment/docker/development-base/Dockerfile -t protokit-base .`
-
-4. Comment out the first line of docker/base/Dockerfile to use protokit-base
+---
